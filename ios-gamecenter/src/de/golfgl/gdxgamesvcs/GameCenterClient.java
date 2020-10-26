@@ -3,6 +3,7 @@ package de.golfgl.gdxgamesvcs;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Array;
 
+import de.golfgl.gdxgamesvcs.achievement.IAchievement;
 import org.robovm.apple.foundation.NSArray;
 import org.robovm.apple.foundation.NSData;
 import org.robovm.apple.foundation.NSError;
@@ -166,7 +167,22 @@ public class GameCenterClient implements IGameServiceClient {
 	}
 
 	@Override
-	public boolean fetchAchievements(IFetchAchievementsResponseListener callback) {
+	public boolean fetchAchievements(final IFetchAchievementsResponseListener callback) {
+		GKAchievement.loadAchievements(new VoidBlock2<NSArray<GKAchievement>, NSError>() {
+			@Override
+			public void invoke(NSArray<GKAchievement> gkAchievements, NSError nsError) {
+				Array<IAchievement> achievements = new Array<>();
+				for (GKAchievement gkAchievement : gkAchievements) {
+					GameCenterAchievement gameCenterAchievement = new GameCenterAchievement();
+
+					gameCenterAchievement.achievementId = gkAchievement.getIdentifier();
+					gameCenterAchievement.percCompl = gkAchievement.getPercentComplete();
+
+					achievements.add(gameCenterAchievement);
+				}
+				callback.onFetchAchievementsResponse(achievements);
+			}
+		});
 		return false;
 	}
 
@@ -215,7 +231,7 @@ public class GameCenterClient implements IGameServiceClient {
 			GKAchievement.reportAchievements(achievements, new VoidBlock1<NSError>() {
 				@Override
 				public void invoke (NSError error) {
-					// do nothing
+					System.out.println("acca - "+error);
 				}
 			});
 
